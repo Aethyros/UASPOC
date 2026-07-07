@@ -45,10 +45,22 @@ def initialize_rf_database():
 
     # 3. SEED THE GROUND-TRUTH PROFILES
     seed_profiles = [
-        ("DJI Phantom 4", 2.400, 20, 256, 10.00, "DJI Lightbridge", "Encrypted/Secure", "GPS Spoofing"),
-        ("Generic Custom FPV", 5.800, 40, 128, 5.00, "Generic RC Link", "Unencrypted/Analog", "Protocol Injection / Jamming"),
-        ("Parrot Bebop", 2.410, 15, 512, 2.00, "MAVLink Telemetry", "Open-Source", "MAVLink Force-LAND")
-    ]
+    # 1. THE STANDARD (Civilian/Commercial)
+    ("DJI Phantom 4", 2.400, 20, 256, 10.00, "DJI Lightbridge", "Encrypted/Secure", "GPS Spoofing"),
+    ("Parrot Bebop", 2.410, 15, 512, 2.00, "MAVLink Telemetry", "Open Source", "Protocol Injection"),
+    
+    # 2. THE ENTERPRISE/MILITARY THREATS
+    ("DJI Matrice 300 RTK", 2.450, 40, 512, 15.00, "OcuSync Enterprise", "Encrypted/Secure", "GPS Spoofing"),
+    ("Skydio X2", 5.180, 20, 256, 12.00, "Skydio Link", "Encrypted/Secure", "GPS Spoofing"),
+    ("Autel EVO Max 4T", 5.850, 20, 1024, 20.00, "Autel SkyLink 3.0", "Encrypted/Secure", "GPS Spoofing"),
+
+    # 3. THE ROGUE/CUSTOM THREATS
+    ("Generic Custom FPV", 5.800, 40, 128, 5.00, "Generic RC Link", "Open Source", "Protocol Injection"),
+    ("TBS Crossfire FPV", 0.915, 10, 64, 0.25, "CRSF Telemetry", "Open Source", "Protocol Injection"),
+    
+    # 4. THE CHEAP TOY (Common Nuisance)
+    ("Holy Stone HS720E", 5.200, 20, 128, 2.00, "Standard Wi-Fi", "Open Source", "Protocol Injection")
+]
 
     for profile in seed_profiles:
         cur.execute("""

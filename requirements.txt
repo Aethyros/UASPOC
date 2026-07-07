@@ -6,6 +6,7 @@ uvicorn[standard]>=0.49.0
 numpy>=2.5.0
 scipy>=1.10.0
 matplotlib>=3.7.0
+requests>=2.34.2
 
 # AI DETECTION & COMPUTER VISION
 
