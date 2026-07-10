@@ -73,7 +73,7 @@ def initialize_rf_database():
     conn.commit()
     cur.close()
     conn.close()
-    print("SUCCESS: PostgreSQL 'uav_rf_signatures' upgraded with Telemetry parameters.")
+    print("SUCCESS: PostgreSQL 'uav_rf_signatures'.")
 
 def query_signature_by_frequency(target_freq_ghz):
     """Queries the database to match an incoming frequency to a known profile."""

@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 # Import specific module's router
 from rf_intelligence.routes import router as rf_router
 
@@ -8,10 +10,22 @@ app = FastAPI(
     description="Software-based simulator for hostile drone detection and response."
 )
 
-# Include your RF module's router
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows any local port to connect during parallel development
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_headers=["*"],
+)
+
+# Register routes with the main application
 app.include_router(rf_router)
 
-# A simple health-check for the main server
+# A simple health-check route for the main server
 @app.get("/")
 def read_root():
-    return {"status": "online", "message": "Counter-UAS Simulator Core is running."}
+    return {
+        "status": "online", 
+        "module": "RF Detection & Signal Intelligence",
+        "message": "Counter-UAS Simulator Core is running. Visit /docs for the API Swagger UI."
+    }

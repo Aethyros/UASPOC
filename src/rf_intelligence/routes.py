@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 
 from .generator import synthesize_rf_wave, synthesize_fhss_wave, RF_PROFILES
@@ -11,14 +11,14 @@ router = APIRouter(
 )
 
 DB_MODEL_TO_SLUG = {
-    "DJI Phantom 4":        "dji_phantom_4",
-    "Parrot Bebop":         "parrot_bebop",
-    "DJI Matrice 300 RTK":  "dji_matrice_300",
-    "Skydio X2":            "skydio_x2",
-    "Autel EVO Max 4T":     "autel_evo_max",
-    "Generic Custom FPV":   "generic_fpv",
-    "TBS Crossfire FPV":    "tbs_crossfire",
-    "Holy Stone HS720E":    "holy_stone",
+    "DJI Phantom 4": "dji_phantom_4",
+    "Parrot Bebop": "parrot_bebop",
+    "DJI Matrice 300 RTK": "dji_matrice_300",
+    "Skydio X2": "skydio_x2",
+    "Autel EVO Max 4T": "autel_evo_max",
+    "Generic Custom FPV": "generic_fpv",
+    "TBS Crossfire FPV": "tbs_crossfire",
+    "Holy Stone HS720E": "holy_stone",
 }
 
 
@@ -37,7 +37,7 @@ def get_raw_simulation_stream(
 
     return {
         "status": "success",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "profile": profile,
         "center_frequency_ghz": profile_data["center_freq_ghz"],
         "bandwidth_mhz": profile_data["bandwidth_mhz"],
@@ -60,7 +60,7 @@ def execute_live_rf_threat_detection(
         return {
             "status": "success",
             "threat_detected": False,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "intelligence_report": {
                 "assessment": "CLEAR — Unrecognised telemetry signature."
             }
@@ -86,7 +86,7 @@ def execute_live_rf_threat_detection(
     return {
         "status": "success",
         "threat_detected": True,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "intelligence_report": {
             "target_lock": {
                 "drone_model": db_match["target_model"],
@@ -127,7 +127,7 @@ def simulate_evasive_fhss_drone(
     }
 
 
-@router.get("/analyze/spectrum")
+@router.get("/spectrum")
 def get_frequency_spectrum(
     profile: str = Query(
         "dji_phantom_4",
@@ -152,15 +152,44 @@ def get_frequency_spectrum(
 
     profile_data = RF_PROFILES.get(profile, RF_PROFILES["dji_phantom_4"])
 
+    # Ensure magnitudes are numpy arrays for math
+    mag_array = np.array(magnitudes)
+    
+    # 1. Calculate Peak and Mean
+    peak_magnitude = round(float(np.max(mag_array)), 4)
+    mean_magnitude = round(float(np.mean(mag_array)), 4)
+    
+    # 2. Approximate Signal-to-Noise Ratio (SNR) in dB
+    # We use the median as a quick approximation of the noise floor
+    noise_floor = np.median(mag_array)
+    if noise_floor > 0:
+        # Standard SNR formula: 10 * log10(Signal_Power / Noise_Power)
+        # Since magnitudes are voltage/amplitude, we use 20 * log10
+        signal_to_noise = round(float(20 * np.log10(peak_magnitude / noise_floor)), 2)
+    else:
+        signal_to_noise = 0.0
+
     return {
-        "status": "success",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "profile": profile,
+        "status":    "success",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "profile":   profile,
         "center_frequency_ghz": profile_data["center_freq_ghz"],
-        "bandwidth_mhz": profile_data["bandwidth_mhz"],
-        "spectrum_data": {
+        "bandwidth_mhz":        profile_data["bandwidth_mhz"],
+        # Time domain — for oscilloscope panel
+        "time_domain": {
+            "samples":      num_samples,
+            "waveform":     waveform,
+        },
+        # Frequency domain — for spectrum analyser panel
+        "frequency_domain": {
             "x_axis_frequencies": freqs,
-            "y_axis_magnitudes": magnitudes,
-            "total_data_points": len(freqs),
-        }
+            "y_axis_magnitudes":  magnitudes,
+            "total_data_points":  len(freqs),
+        },
+        # Summary metrics — for dashboard status bar widgets
+        "metrics": {
+            "peak_magnitude":      peak_magnitude,
+            "mean_magnitude":      mean_magnitude,
+            "signal_to_noise_ratio": signal_to_noise,
+        },
     }
