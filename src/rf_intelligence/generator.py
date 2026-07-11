@@ -19,7 +19,7 @@ RF_PROFILES = {
 }
 
 
-def synthesize_rf_wave(profile_type="dji_phantom_4", num_samples=128):
+def synthesize_rf_wave(profile_type="dji_phantom_4", num_samples=1024):
     """
     Synthesizes a raw, noisy RF carrier wave float array based on ground-truth profiles.
     Noise level varies per profile — military drones have cleaner signals than rogue FPV.

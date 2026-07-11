@@ -30,7 +30,7 @@ def get_raw_simulation_stream(
     )
 ):
     """INGESTION: Delivers raw noisy float arrays to Signal Processing."""
-    waveform = synthesize_rf_wave(profile_type=profile, num_samples=128)
+    waveform = synthesize_rf_wave(profile_type=profile, num_samples=1024)
 
     # Pull freq directly from RF_PROFILES — no duplicate freq_map needed
     profile_data = RF_PROFILES.get(profile, RF_PROFILES["dji_phantom_4"])
@@ -47,7 +47,7 @@ def get_raw_simulation_stream(
         "carrier_wave_raw": waveform,
         "lowcut_frequency": center_freq_ghz - bandwidth_mhz/2000,
         "highcut_frequency": center_freq_ghz + bandwidth_mhz/2000,
-        "sample_frequency": 2.5 * bandwidth_mhz
+        "sample_frequency": 2.5 * bandwidth_mhz/1000
     }
 
 
