@@ -21,7 +21,7 @@ def generate_live_spectrogram(api_url="http://127.0.0.1:8000/api/rf/simulate"):
         drone_data = response.json() 
         
         # Assuming his API returns a list of signal points and a sample rate
-        drone_data = response.json()
+        
         raw_wave   = np.array(drone_data.get("carrier_wave_raw", [])) + 1e-10
         bandwidth_mhz = drone_data.get("bandwidth_mhz", 20.0)
         fs_hz      = drone_data.get("sample_frequency", 0.05) * 1e9       # 50 MHz -> 50,000,000 Hz
@@ -53,11 +53,11 @@ def generate_live_spectrogram(api_url="http://127.0.0.1:8000/api/rf/simulate"):
     # Reset the buffer's "cursor" to the beginning so other modules can read it
     image_buffer.seek(0) 
     # Temporary debug: save to disk to confirm it works
-    """
-    with open("debug_spectrogram.png", "wb") as f:
+    
+    """with open("debug_spectrogram.png", "wb") as f:
         f.write(image_buffer.read())
-    print("Spectrogram saved as 'debug_spectrogram.png' for verification.")
-    """
+    print("Spectrogram saved as 'debug_spectrogram.png' for verification.")"""
+    
     
     # Clear the plot from matplotlib's memory so it doesn't slow down the computer
     print(f"DEBUG: Buffer has {image_buffer.getbuffer().nbytes} bytes of data.")
