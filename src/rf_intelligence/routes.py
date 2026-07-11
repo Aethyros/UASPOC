@@ -35,13 +35,19 @@ def get_raw_simulation_stream(
     # Pull freq directly from RF_PROFILES — no duplicate freq_map needed
     profile_data = RF_PROFILES.get(profile, RF_PROFILES["dji_phantom_4"])
 
+    center_freq_ghz = profile_data["center_freq_ghz"]
+    bandwidth_mhz = profile_data["bandwidth_mhz"]
+
     return {
         "status": "success",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "profile": profile,
-        "center_frequency_ghz": profile_data["center_freq_ghz"],
-        "bandwidth_mhz": profile_data["bandwidth_mhz"],
+        "center_frequency_ghz": center_freq_ghz,
+        "bandwidth_mhz": bandwidth_mhz,
         "carrier_wave_raw": waveform,
+        "lowcut_frequency": center_freq_ghz - bandwidth_mhz/2000,
+        "highcut_frequency": center_freq_ghz + bandwidth_mhz/2000,
+        "sample_frequency": 2.5 * bandwidth_mhz
     }
 
 

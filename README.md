@@ -73,9 +73,10 @@ The PostgreSQL database provides ground-truth reference profiles evaluated again
 |:---|:---|
 | Core Language & Orchestration | Python 3.x, FastAPI, Uvicorn |
 | Signal Synthesis & Processing | NumPy, SciPy, Matplotlib |
-| AI & Computer Vision |  |
-| Database | PostgreSQL, psycopg2 |
+| AI & Computer Vision | YOLOv8, OpenCV, PyTorch |
+| Database | PostgreSQL, psycopg2, requests |
 | Frontend | React.js, Figma (UI mockups), PlantUML (architecture diagrams) |
+| Version Control | GitHub |
 
 ---
 
