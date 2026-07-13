@@ -87,7 +87,7 @@ def execute_live_rf_threat_detection(
 
     # Resolve the correct generator profile for this specific drone model
     profile_slug   = DB_MODEL_TO_SLUG.get(db_match["target_model"], "dji_phantom_4")
-    live_heartbeat = synthesize_rf_wave(profile_type=profile_slug, num_samples=32)
+    live_heartbeat = synthesize_rf_wave(profile_type=profile_slug, num_samples=1024)
 
     return {
         "status": "success",

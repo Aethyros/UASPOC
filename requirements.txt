@@ -1,16 +1,20 @@
 # CORE API & ORCHESTRATION LAYER (Switchboard)
-fastapi>=0.138.0
-uvicorn[standard]>=0.49.0
+fastapi
+uvicorn[standard]
 
 # MATHEMATICAL SYNTHESIS & SIGNAL PROCESSING
-numpy>=2.5.0
-scipy>=1.10.0
-matplotlib>=3.7.0
-requests>=2.34.2
+numpy
+scipy
+matplotlib
+requests
 
 # AI DETECTION & COMPUTER VISION
+ultralytics 
+opencv-python 
+torch 
+torchvision
 
 # DATABASE (GROUND-TRUTH SIGNATURES)
-psycopg2-binary>=2.9.12
+psycopg2-binary
 
 # PROTOCOL INJECTION & TELEMETRY (Takeover)
