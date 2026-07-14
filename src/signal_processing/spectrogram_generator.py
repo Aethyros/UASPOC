@@ -6,7 +6,7 @@ from PIL import Image
 from signal_filter import apply_bandpass_filter
 
 
-def generate_live_spectrogram(api_url="http://127.0.0.1:8000/api/rf/simulate"):
+def generate_live_spectrogram(api_url="http://127.0.0.1:8000/api/rf/latest"):
     """
     Pulls live drone data from the API and streams a spectrogram image from memory.
     """

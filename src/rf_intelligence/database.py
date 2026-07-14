@@ -92,20 +92,150 @@ def query_signature_by_frequency(target_freq_ghz):
     conn.close()
     return result
 
-def query_signature_by_telemetry(packet_len: int, symbol_rate: float):
-    """DETECTION: Identifies evasive FHSS drones by the physical shape of their data packets."""
+def query_signature_by_telemetry(packet_len: int, symbol_rate: float, len_tol: int = 4, rate_tol_pct: float = 0.05):
+    """
+    DETECTION: Identifies evasive FHSS drones by physical packet shape,
+    allowing for real-world calculation tolerances in the DSP pipeline.
+    
+    :param packet_len: Estimated packet length in bytes.
+    :param symbol_rate: Estimated symbol rate in Mbps.
+    :param len_tol: Absolute byte tolerance (+/-).
+    :param rate_tol_pct: Percentage tolerance for symbol rate (default 5%).
+    """
+    # Calculate acceptable bounds
+    min_len = packet_len - len_tol
+    max_len = packet_len + len_tol
+    
+    rate_margin = symbol_rate * rate_tol_pct
+    min_rate = symbol_rate - rate_margin
+    max_rate = symbol_rate + rate_margin
+
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # We look for a match based on packet size and speed, completely ignoring frequency!
+    # Query using a tolerance bounding box, then sort by the closest symbol rate match
     cur.execute("""
         SELECT * FROM uav_rf_signatures
-        WHERE packet_length_bytes = %s 
-        AND symbol_rate_mbps = %s
+        WHERE packet_length_bytes BETWEEN %s AND %s 
+        AND symbol_rate_mbps BETWEEN %s AND %s
+        ORDER BY ABS(symbol_rate_mbps - %s) ASC
         LIMIT 1;
-    """, (packet_len, symbol_rate))
+    """, (min_len, max_len, min_rate, max_rate, symbol_rate))
     
     result = cur.fetchone()
     cur.close()
     conn.close()
+    
     return result
+
+
+
+# Stores simulation results
+
+def initialize_simulations_table():
+    """Builds the schema for storing historical RF simulation runs."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # NUKE THE OLD TABLE
+    cur.execute("DROP TABLE IF EXISTS rf_simulations CASCADE;")
+
+    # Create the simulations table
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS rf_simulations (
+            id SERIAL PRIMARY KEY,
+            timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            profile VARCHAR(50) NOT NULL,
+            threat_class VARCHAR(50) NOT NULL,
+            is_fhss BOOLEAN NOT NULL,
+            
+            -- Frequency Config
+            center_frequency_ghz REAL NOT NULL,
+            bandwidth_mhz REAL NOT NULL,
+            lowcut_frequency REAL,
+            highcut_frequency REAL,
+            sample_frequency REAL,
+            
+            -- Metrics
+            peak_magnitude REAL,
+            mean_magnitude REAL,
+            signal_to_noise_ratio REAL,
+            
+            -- Heavy Arrays (Native Postgres Arrays)
+            carrier_wave_raw REAL[] NOT NULL,
+            x_axis_frequencies REAL[] NOT NULL,
+            y_axis_magnitudes REAL[] NOT NULL
+        );
+    """)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("SUCCESS: PostgreSQL 'rf_simulations' table initialized.")
+
+
+def insert_rf_simulation(payload: dict):
+    """Inserts a single simulation dictionary payload into the database."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    metrics = payload.get("metrics", {})
+    freq_domain = payload.get("frequency_domain", {})
+
+    cur.execute("""
+        INSERT INTO rf_simulations (
+            profile, threat_class, is_fhss, 
+            center_frequency_ghz, bandwidth_mhz, lowcut_frequency, highcut_frequency, sample_frequency,
+            peak_magnitude, mean_magnitude, signal_to_noise_ratio,
+            carrier_wave_raw, x_axis_frequencies, y_axis_magnitudes
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        payload["profile"],
+        payload["threat_class"],
+        payload["is_fhss"],
+        payload["center_frequency_ghz"],
+        payload["bandwidth_mhz"],
+        payload["lowcut_frequency"],
+        payload["highcut_frequency"],
+        payload["sample_frequency"],
+        metrics.get("peak_magnitude", 0.0),
+        metrics.get("mean_magnitude", 0.0),
+        metrics.get("signal_to_noise_ratio", 0.0),
+        payload["carrier_wave_raw"],          # psycopg2 handles Python lists -> Postgres Arrays automatically
+        freq_domain.get("x_axis_frequencies", []),
+        freq_domain.get("y_axis_magnitudes", [])
+    ))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_recent_simulations(limit=5):
+    """Fetches the most recent RF simulations from the database."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Query the table we created earlier
+    cur.execute("""
+        SELECT * FROM rf_simulations 
+        ORDER BY timestamp DESC 
+        LIMIT %s;
+    """, (limit,))
+    
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    return results
+
+if __name__ == "__main__":
+    print("Starting database initialization...")
+    
+    # 1. Initialize your original telemetry table
+    initialize_rf_database()
+    
+    # 2. Initialize the new simulations table
+    initialize_simulations_table()
+    
+    print("All tables initialized successfully!")
